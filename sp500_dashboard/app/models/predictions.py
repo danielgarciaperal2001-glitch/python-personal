@@ -26,10 +26,8 @@ class TechnicalIndicator(Base):
     
     created_at = Column(DATETIME, server_default=func.now())
     
-    # ✅ FIX: Índices + unique constraint correcto
     __table_args__ = (
         Index('idx_company_date', 'company_id', 'indicator_date'),
-        # Unique constraint como tuple correcto
         Index('uq_company_date', 'company_id', 'indicator_date', unique=True),
     )
 

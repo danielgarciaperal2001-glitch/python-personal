@@ -12,7 +12,7 @@ def ensure_tables():
 
 def calculate_indicators(db: Session, company_id: int, days_back: int = 60):
     """Con chequeo de tabla"""
-    ensure_tables()  # ✅ SEGURIDAD
+    ensure_tables()
 
 logger = logging.getLogger(__name__)
 

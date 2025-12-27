@@ -84,11 +84,10 @@ class SP500DataLoader:
                 
                 batch_prices = []
                 for date, row in prices_df.iterrows():
-                    # ✅ FIX: Manejo correcto de fecha
                     if hasattr(date, 'date'):
                         price_date = date.date()
                     else:
-                        price_date = date  # Ya es date
+                        price_date = date
                     
                     # Verificar duplicados
                     existing = self.db.query(DailyPrice).filter(

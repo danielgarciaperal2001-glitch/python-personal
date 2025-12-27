@@ -41,7 +41,7 @@ class SP500Fetcher:
         return pd.DataFrame(backup_data)
 
     def download_historical_data(self, tickers: List[str], days_back: int = 365) -> Dict[str, pd.DataFrame]:
-        """✅ STOOQ.COM: Datos REALES diarios (SIN API KEY)"""
+        """ STOOQ.COM: Datos REALES diarios"""
         logger.info(f"📊 STOOQ.COM: {len(tickers)} tickers reales")
         
         result = {}
@@ -56,7 +56,7 @@ class SP500Fetcher:
                 
                 df = pd.read_csv(StringIO(response.text))
                 print(df)
-                if len(df) > 10 and 'Date' in df.columns:  # Datos válidos
+                if len(df) > 10 and 'Date' in df.columns: 
                     df['Date'] = pd.to_datetime(df['Date'])
                     df = df.rename(columns={
                         'Open': 'Open', 'High': 'High', 'Low': 'Low',

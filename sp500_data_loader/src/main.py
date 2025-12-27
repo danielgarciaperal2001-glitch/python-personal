@@ -38,7 +38,7 @@ def main():
         from .services.predictions import generate_trading_signals, get_top_signals
         signals = generate_trading_signals(db, 501)
         
-        # 4. TOP 10
+        # 4. TOP 
         top_signals = get_top_signals(db, len(signals))
         logger.info(f"🏆 TOP {len(signals)}:")
         print("\n" + "="*80)

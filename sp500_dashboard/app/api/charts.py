@@ -7,7 +7,6 @@ import pandas as pd
 
 router = APIRouter()
 
-# ✅ FIX: ticker PRIMERO, db DESPUÉS
 @router.get("/{ticker}")
 async def get_price_chart(ticker: str, db: Session = Depends(get_db)):
     """Gráfico OHLCV"""

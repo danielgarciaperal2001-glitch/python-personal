@@ -7,16 +7,13 @@ from .core.database import get_db, Base, engine
 
 app = FastAPI(title="SP500 Trading Dashboard 🚀")
 
-# ✅ STATIC + TEMPLATES
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
-# ✅ IMPORTAR TODOS LOS ROUTERS
 from .api.companies import router as companies_router
 from .api.charts import router as charts_router
 from .api.signals import router as signals_router  # Si existe
 
-# ✅ INCLUIR ROUTERS
 app.include_router(companies_router, prefix="/api/companies", tags=["Companies"])
 app.include_router(charts_router, prefix="/api/charts", tags=["Charts"])
 if 'signals_router' in locals():

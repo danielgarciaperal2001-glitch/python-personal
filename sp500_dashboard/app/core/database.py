@@ -15,7 +15,6 @@ engine = create_engine(
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# ✅ FIX: Función generator CORRECTA para FastAPI Depends
 def get_db() -> Generator:
     """✅ Dependencia FastAPI: Session por request"""
     db = SessionLocal()

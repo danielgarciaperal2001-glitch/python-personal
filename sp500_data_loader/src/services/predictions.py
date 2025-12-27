@@ -14,7 +14,7 @@ def ensure_tables_exist():
 
 def generate_trading_signals(db: Session, top_n: int = 10):
     """Genera señales con chequeo de tablas"""
-    ensure_tables_exist()  # ✅ SEGURIDAD EXTRA
+    ensure_tables_exist()
     
     companies = db.query(Company).filter(Company.is_active == True).limit(50).all()
     

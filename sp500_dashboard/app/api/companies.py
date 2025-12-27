@@ -12,7 +12,6 @@ async def get_companies(db: Session = Depends(get_db), limit: int = 100):
     companies = db.query(Company).filter(Company.is_active == True).limit(limit).all()
     return [{"id": c.id, "ticker": c.ticker, "name": c.name, "sector": c.sector} for c in companies]
 
-# ✅ NUEVO: Endpoint para TODOS los tickers del selector
 @router.get("/tickers")
 async def get_all_tickers(db: Session = Depends(get_db)):
     """TODOS los tickers activos para selector (501 empresas)"""
