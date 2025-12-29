@@ -1,2 +1,0 @@
-from .sp500 import Company, DailyPrice
-__all__ = ['Company', 'DailyPrice']
