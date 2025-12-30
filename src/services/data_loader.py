@@ -34,7 +34,6 @@ class SP500DataLoader:
             company = self.db.query(Company).filter(Company.ticker == row['ticker']).first()
             
             if company:
-                # Actualizar si cambió algo
                 if (company.name != row['name'] or 
                     company.sector != row['sector'] or 
                     company.industry != row['industry']):
@@ -44,7 +43,6 @@ class SP500DataLoader:
                     company.is_active = True
                     updated_companies.append(company)
             else:
-                # Nueva empresa
                 company = Company(
                     ticker=row['ticker'],
                     name=row['name'],
@@ -56,7 +54,6 @@ class SP500DataLoader:
                 self.db.add(company)
                 new_companies.append(company)
         
-        # Desactivar empresas que ya no están en S&P500
         inactive_companies = self.db.query(Company).filter(
             Company.ticker.notin_(sp500_df['ticker'].tolist()),
             Company.is_active == True
@@ -89,7 +86,6 @@ class SP500DataLoader:
                     else:
                         price_date = date
                     
-                    # Verificar duplicados
                     existing = self.db.query(DailyPrice).filter(
                         DailyPrice.company_id == company.id,
                         DailyPrice.price_date == price_date
@@ -127,7 +123,7 @@ class SP500DataLoader:
         logger.info(f"🔄 Incremental: {len(companies)} tickers (últimos {days_back} días)")
         all_data = self.fetcher.download_historical_data(
             [c.ticker for c in companies], 
-            days_back=days_back * 2  # Buffer para solapamiento
+            days_back=days_back * 2
         )
         
         total_new_prices = 0
@@ -137,8 +133,7 @@ class SP500DataLoader:
             
             if ticker in all_data and not all_data[ticker].empty:
                 prices_df = all_data[ticker]
-                
-                # Fecha MÁS RECIENTE en DB para este ticker
+
                 last_date_db = self.db.query(
                     func.max(DailyPrice.price_date)
                 ).filter(DailyPrice.company_id == company.id).scalar()
@@ -146,8 +141,7 @@ class SP500DataLoader:
                 new_prices = []
                 for date, row in prices_df.iterrows():
                     price_date = date.date() if hasattr(date, 'date') else date
-                    
-                    # Solo si es NUEVO (después de última fecha DB)
+
                     if last_date_db is None or price_date > last_date_db:
                         existing = self.db.query(DailyPrice).filter(
                             DailyPrice.company_id == company.id,
@@ -171,8 +165,8 @@ class SP500DataLoader:
                     total_new_prices += len(new_prices)
                     logger.info(f"💾 {ticker}: +{len(new_prices)} nuevos días (desde {last_date_db or 'inicio'})")
             
-            self.db.commit()  # Commit por ticker (seguridad)
-        
+            self.db.commit()
+            
         logger.info(f"✅ Incremental completado: {total_new_prices:,} nuevos precios")
         return total_new_prices
 

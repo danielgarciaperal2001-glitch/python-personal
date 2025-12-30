@@ -15,8 +15,7 @@ class Company(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DATETIME, server_default=func.now())
     updated_at = Column(DATETIME, server_default=func.now(), onupdate=func.now())
-    
-    # Relación 1:N con precios
+
     prices = relationship("DailyPrice", back_populates="company", cascade="all, delete-orphan")
 
 class DailyPrice(Base):
@@ -35,8 +34,7 @@ class DailyPrice(Base):
     
     created_at = Column(DATETIME, server_default=func.now())
     updated_at = Column(DATETIME, server_default=func.now(), onupdate=func.now())
-    
-    # Relación inversa
+
     company = relationship("Company", back_populates="prices")
     
     __table_args__ = (

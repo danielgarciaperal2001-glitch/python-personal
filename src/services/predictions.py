@@ -24,8 +24,6 @@ def generate_trading_signals(db: Session, top_n: int = 10):
         except Exception as e:
             logger.warning(f"⚠️ Skip {company.ticker}: {str(e)[:40]}")
             continue
-    
-    # Crear señales TOP
     signals = []
     recent_indicators = db.query(
         TechnicalIndicator.company_id,

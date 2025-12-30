@@ -14,8 +14,7 @@ class PortfolioOptimizer:
         """Kelly Criterion + Sharpe + Diversificación"""
         
         logger.info(f"💼 Optimizando portfolio TOP {top_signals} señales...")
-        
-        # TOP señales ML + Backtest
+
         top_stocks = db.execute(text("""
             SELECT 
                 c.ticker, 
@@ -37,25 +36,21 @@ class PortfolioOptimizer:
         if len(top_stocks) < 5:
             logger.warning(f"⚠️ Solo {len(top_stocks)} señales válidas")
             return None
-        
-        # DataFrame portfolio
+
         columns = ['ticker', 'sector', 'name', 'ml_score', 'pred_price', 'confidence', 'backtest_roi']
         df_portfolio = pd.DataFrame(top_stocks, columns=columns)
-        
-        # ✅ FIX Decimal → float
+
         numeric_cols = ['ml_score', 'pred_price', 'confidence', 'backtest_roi']
         for col in numeric_cols:
             df_portfolio[col] = pd.to_numeric(df_portfolio[col], errors='coerce').fillna(0.5)
-        
-        # Score combinado (ML + Backtest + Confianza)
-        df_portfolio['backtest_roi'] = df_portfolio['backtest_roi'].fillna(0.12)  # Default mercado
+
+        df_portfolio['backtest_roi'] = df_portfolio['backtest_roi'].fillna(0.12)
         df_portfolio['combined_score'] = (
             df_portfolio['ml_score'] * 0.5 +
             df_portfolio['confidence'] * 0.3 +
             (df_portfolio['backtest_roi'] / 100) * 0.2
         )
-        
-        # 1. LIMITAR por sector (max 25%)
+
         sector_weights = df_portfolio.groupby('sector')['combined_score'].sum()
         total_sector_weight = sector_weights.sum()
         sector_allocation = {}
@@ -63,22 +58,18 @@ class PortfolioOptimizer:
             sector_allocation[sector] = min(0.25, weight / total_sector_weight)
         
         recommendations = []
-        for _, stock in df_portfolio.head(12).iterrows():  # TOP 12
-            # Expected return histórico (mínimo 5% evitar zero)
+        for _, stock in df_portfolio.head(12).iterrows(): 
             expected_return = max(0.05, stock['backtest_roi'] / 100)
             
-            # Probabilidad victoria = ML Score
             p_win = stock['ml_score']
             
-            # ✅ FIX Kelly: evitar /0
             if expected_return == 0:
-                kelly_fraction = 0.02  # Mínimo conservador
+                kelly_fraction = 0.02
             else:
-                b = (1 + expected_return) / expected_return  # Odds
+                b = (1 + expected_return) / expected_return 
                 kelly_fraction = (p_win * b - (1 - p_win)) / b
-                kelly_fraction = max(0.02, min(0.18, kelly_fraction))  # 2-18%
+                kelly_fraction = max(0.02, min(0.18, kelly_fraction)) 
             
-            # Sector allocation
             sector_alloc = sector_allocation.get(stock['sector'], 0.08)
             final_weight = kelly_fraction * sector_alloc
             
@@ -95,19 +86,15 @@ class PortfolioOptimizer:
                 'expected_return_pct': expected_return * 100
             })
 
-        
-        # Normalizar pesos al 100%
         total_weight = sum(rec['weight'] for rec in recommendations)
         final_recommendations = [
             {**rec, 'weight': rec['weight'] / total_weight}
-            for rec in recommendations[:10]  # Máximo 10 posiciones
+            for rec in recommendations[:10]
         ]
         
-        # Métricas portfolio
-        portfolio_sharpe = 1.75  # Estimado conservador
+        portfolio_sharpe = 1.75  
         avg_kelly = np.mean([r['kelly_fraction'] for r in final_recommendations])
         
-        # Guardar recomendación
         portfolio_rec = PortfolioRecommendation(
             total_recommended_positions=len(final_recommendations),
             expected_sharpe=float(portfolio_sharpe),
@@ -121,7 +108,6 @@ class PortfolioOptimizer:
         db.add(portfolio_rec)
         db.commit()
         
-        # MOSTRAR portfolio
         logger.info("\n" + "="*70)
         logger.info("💼 PORTFOLIO OPTIMIZADO (Kelly + Sharpe)")
         logger.info("="*70)

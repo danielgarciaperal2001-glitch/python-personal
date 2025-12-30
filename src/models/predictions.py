@@ -10,8 +10,7 @@ class TechnicalIndicator(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     company_id = Column(Integer, ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
     indicator_date = Column(Date, nullable=False)
-    
-    # Indicadores
+
     rsi = Column(DECIMAL(5,2), nullable=True)
     macd = Column(DECIMAL(10,6), nullable=True)
     macd_signal = Column(DECIMAL(10,6), nullable=True)
@@ -57,19 +56,18 @@ class MLPrediction(Base):
     id = Column(Integer, primary_key=True)
     company_id = Column(Integer, ForeignKey("companies.id"))
     prediction_date = Column(Date)
-    
-    # Predicciones ML
+
     pred_price_1d = Column(DECIMAL(12,6))
     pred_price_5d = Column(DECIMAL(12,6))
     pred_price_20d = Column(DECIMAL(12,6))
     
-    confidence_1d = Column(DECIMAL(5,3))  # 0-1
+    confidence_1d = Column(DECIMAL(5,3))
     confidence_5d = Column(DECIMAL(5,3))
     
-    accuracy_1d = Column(DECIMAL(5,3))  # Histórica
+    accuracy_1d = Column(DECIMAL(5,3)) 
     accuracy_5d = Column(DECIMAL(5,3))
     
-    ml_score = Column(DECIMAL(5,3))  # 0-1 COMBINADO
+    ml_score = Column(DECIMAL(5,3))
 
 class BacktestResult(Base):
     __tablename__ = "backtest_results"
@@ -94,4 +92,4 @@ class PortfolioRecommendation(Base):
     total_recommended_positions = Column(Integer)
     expected_sharpe = Column(DECIMAL(5,3))
     kelly_fraction = Column(DECIMAL(5,3))
-    recommendations = Column(JSON)  # [{"ticker": "NVDA", "weight": 0.12}]
+    recommendations = Column(JSON)

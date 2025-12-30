@@ -1,25 +1,11 @@
 import logging
 import sys
 import traceback
-from pathlib import Path
-from .models.predictions import BacktestResult  
-from .models.predictions import PortfolioRecommendation
-
-# Database
 from .core.database import get_db, engine, Base
-
-# Models (IMPORTAR AQUÍ)
 from .models.sp500 import Company, DailyPrice
-from .models.predictions import TechnicalIndicator, TradingSignal, MLPrediction
-
-# Services
 from .services.data_loader import SP500DataLoader
+from sqlalchemy import text
 
-# SQLAlchemy
-from sqlalchemy.orm import Session
-from sqlalchemy import text, func
-
-# Config logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -40,7 +26,6 @@ def main(mode: str = "incremental"):
     loader = SP500DataLoader(db)
     
     try:
-        # Actualizar empresas
         logger.info("🏢 Actualizando empresas S&P500...")
         loader.load_companies()
         
@@ -57,7 +42,6 @@ def main(mode: str = "incremental"):
             from .services.ml_predictor import MLPredictor
             predictor = MLPredictor()
             
-            # TOP 20 empresas con datos
             companies = db.query(Company.id).join(
                 DailyPrice, Company.id == DailyPrice.company_id
             ).group_by(Company.id).limit(20).all()
@@ -68,7 +52,6 @@ def main(mode: str = "incremental"):
             
             logger.info("✅ ML entrenado!")
 
-        # Añadir al bloque elif:
         elif mode == "backtest":
             logger.info("📊 MODO BACKTEST: Validar estrategia histórica")
             from .services.backtester import Backtester
@@ -91,7 +74,6 @@ def main(mode: str = "incremental"):
             logger.error(f"❌ Modo inválido: {mode}")
             return
         
-        # Stats finales
         stats = db.execute(text("""
             SELECT 
                 (SELECT COUNT(*) FROM companies WHERE is_active=1) as empresas,

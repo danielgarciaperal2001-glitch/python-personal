@@ -16,7 +16,7 @@ class MultiSourceFetcher:
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         })
-        self.source_success = {}  # Tracking fuentes exitosas
+        self.source_success = {}
 
     def get_sp500_list(self) -> pd.DataFrame:
         """Lista S&P500 (Wikipedia estable)"""
@@ -47,12 +47,11 @@ class MultiSourceFetcher:
         logger.info(f"🌐 MultiFuente: {len(tickers)} tickers")
         
         result = {}
-        sources = ['yahoo_single', 'polygon_free', 'fmp_free', 'nasdaq_csv']  # Orden prioridad
+        sources = ['yahoo_single', 'polygon_free', 'fmp_free', 'nasdaq_csv']
         
         for ticker in tickers:
             data = None
             
-            # Probar cada fuente hasta éxito
             for source in sources:
                 try:
                     data = self._fetch_source(ticker, source, days_back)
@@ -124,7 +123,6 @@ class MultiSourceFetcher:
 
     def _nasdaq_csv(self, ticker: str) -> pd.DataFrame:
         """NASDAQ CSV directo"""
-        # Fallback datos simulados realistas
         dates = pd.date_range(end=datetime.now(), periods=252)
         np.random.seed(hash(ticker) % 1000)
         base_price = np.random.uniform(50, 300)

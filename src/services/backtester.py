@@ -5,7 +5,7 @@ from sqlalchemy import text
 from datetime import datetime, timedelta
 import logging
 from ..models.sp500 import Company, DailyPrice
-from ..models.predictions import MLPrediction, BacktestResult  # ✅ CORRECTO
+from ..models.predictions import MLPrediction, BacktestResult
 
 logger = logging.getLogger(__name__)
 
@@ -20,8 +20,7 @@ class Backtester:
         start_date = end_date - timedelta(days=days_back)
         
         logger.info(f"📊 Backtest {company.ticker} ({days_back} días)...")
-        
-        # Precios período
+
         prices = db.query(DailyPrice).filter(
             DailyPrice.company_id == company_id,
             DailyPrice.price_date >= start_date
@@ -37,7 +36,6 @@ class Backtester:
         } for p in prices if p.close])
         df_prices.set_index('date', inplace=True)
         
-        # ✅ ML Signals (ml_score > 0.7 BUY, < 0.3 SELL)
         ml_signals = db.execute(text("""
             SELECT prediction_date as signal_date, ml_score, pred_price_1d
             FROM ml_predictions 
@@ -54,8 +52,7 @@ class Backtester:
         if not ml_signals:
             logger.warning(f"⚠️ {company.ticker}: Sin señales ML")
             return None
-        
-        # Simular portfolio $10K
+
         portfolio_value = 10000.0
         position_shares = 0
         equity_curve = [10000.0]
@@ -66,33 +63,26 @@ class Backtester:
                 continue
                 
             current_price = df_prices.loc[signal_date, 'close']
-            
-            # BUY: ML Score > 0.7
+
             if ml_score > 0.7 and position_shares == 0:
                 position_shares = portfolio_value / current_price
                 trades.append(('BUY', signal_date, current_price, ml_score))
-                
-            # SELL: ML Score < 0.3
+
             elif ml_score < 0.3 and position_shares > 0:
                 portfolio_value = position_shares * current_price
                 trades.append(('SELL', signal_date, current_price, ml_score))
                 position_shares = 0
-            
-            # Equity actual (diario)
+
             current_equity = portfolio_value if position_shares == 0 else position_shares * current_price
             equity_curve.append(current_equity)
-        
-        # Cierre final (si position abierta)
+
         final_price = df_prices['close'].iloc[-1]
         final_equity = portfolio_value if position_shares == 0 else position_shares * final_price
-        
-        # Métricas
+
         total_return_pct = ((final_equity / 10000.0) - 1) * 100
-        
-        # Buy&Hold benchmark
+
         buy_hold_return = ((final_price / df_prices['close'].iloc[0]) - 1) * 100
-        
-        # Sharpe + Drawdown
+
         returns_daily = pd.Series(equity_curve).pct_change().dropna()
         sharpe_ratio = returns_daily.mean() / returns_daily.std() * np.sqrt(252) if returns_daily.std() > 0 else 0
         
@@ -101,8 +91,7 @@ class Backtester:
         max_drawdown = drawdown.max()
         
         win_rate = len([t for t in trades if t[0] == 'SELL']) / max(1, len(trades) / 2)
-        
-        # Guardar resultado
+
         result = BacktestResult(
             strategy='ML_Momentum',
             company_id=company_id,
@@ -135,8 +124,7 @@ class Backtester:
     def backtest_top_stocks(self, db: Session, limit: int = 20):
         """Backtest TOP 20 empresas con ML"""
         logger.info(f"🚀 BACKTEST MASIVO: {limit} empresas...")
-        
-        # Empresas con ML predictions
+
         companies_with_ml = db.execute(text("""
             SELECT DISTINCT c.id 
             FROM companies c
@@ -154,8 +142,7 @@ class Backtester:
         if not results:
             logger.warning("⚠️ Sin empresas con ML predictions")
             return []
-        
-        # Estadísticas agregadas
+
         df_results = pd.DataFrame(results)
         avg_ml = df_results['ml_return'].mean()
         avg_bh = df_results['buy_hold'].mean()

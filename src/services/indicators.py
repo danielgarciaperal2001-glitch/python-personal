@@ -43,31 +43,26 @@ def calculate_indicators(db: Session, company_id: int, days_back: int = 60):
     
     df['date'] = pd.to_datetime(df['date'])
     df.set_index('date', inplace=True)
-    
-    # RSI (14 días)
+
     delta = df['close'].diff()
     gain = (delta.where(delta > 0, 0)).rolling(14).mean()
     loss = (-delta.where(delta < 0, 0)).rolling(14).mean()
     rs = gain / loss
     rsi = 100 - (100 / (1 + rs))
-    
-    # MACD
+
     ema12 = df['close'].ewm(span=12).mean()
     ema26 = df['close'].ewm(span=26).mean()
     macd = ema12 - ema26
     macd_signal = macd.ewm(span=9).mean()
-    
-    # Medias móviles
+
     sma20 = df['close'].rolling(20).mean()
     sma50 = df['close'].rolling(50).mean()
-    
-    # Bollinger Bands
+
     sma20_bb = df['close'].rolling(20).mean()
     std20 = df['close'].rolling(20).std()
     bb_upper = sma20_bb + (std20 * 2)
     bb_lower = sma20_bb - (std20 * 2)
-    
-    # Volatilidad
+
     volatility = df['close'].pct_change().rolling(20).std() * 100 * np.sqrt(252)
     
     latest = {
@@ -80,14 +75,12 @@ def calculate_indicators(db: Session, company_id: int, days_back: int = 60):
         'bb_lower': float(bb_lower.iloc[-1]) if not pd.isna(bb_lower.iloc[-1]) else None,
         'volatility': float(volatility.iloc[-1]) if not pd.isna(volatility.iloc[-1]) else None,
     }
-    
-    # Score momentum
+
     current_price = float(df['close'].iloc[-1])
     latest['momentum_score'] = calculate_momentum_score(latest, current_price)
     latest['buy_signal'] = latest['momentum_score'] > 0.7 if latest['momentum_score'] else False
     latest['sell_signal'] = latest['momentum_score'] < 0.3 if latest['momentum_score'] else False
-    
-    # Guardar
+
     existing = db.query(TechnicalIndicator).filter(
         TechnicalIndicator.company_id == company_id,
         TechnicalIndicator.indicator_date == df.index[-1].date()
